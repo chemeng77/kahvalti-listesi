@@ -26,9 +26,81 @@
             background-color: #d4edda;
         }
     </style>
-    <!-- Firebase SDKs (v8) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyByAxwWtb2waRiSkCPcPHbDyDOSKRypwJw",
+            authDomain: "kahvalti-secim-sitesi.firebaseapp.com",
+            databaseURL: "https://kahvalti-secim-sitesi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "kahvalti-secim-sitesi",
+            storageBucket: "kahvalti-secim-sitesi.appspot.com",
+            messagingSenderId: "1023667017125",
+            appId: "1:1023667017125:web:f4b4dbca4c31825ca2e24c"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.onload = () => {
+            const malzemeListesi = document.getElementById('malzemeListesi');
+
+            // Load data from Firebase and update the table
+            const dbRef = ref(database, 'kahvaltiListesi');
+            onValue(dbRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                const rows = malzemeListesi.querySelectorAll('tr');
+
+                rows.forEach((row) => {
+                    const malzeme = row.cells[0]?.innerText;
+                    const kisiHucresi = row.querySelector('.kisiler');
+                    const button = row.querySelector('button');
+
+                    if (data[malzeme]) {
+                        kisiHucresi.textContent = data[malzeme];
+                        button.disabled = true;
+                        button.textContent = 'Seçildi';
+                        row.classList.add('taken');
+                    }
+                });
+            });
+
+            // Handle button clicks to select an item
+            window.secMalzeme = (button) => {
+                const row = button.parentElement.parentElement;
+                const kisiHucresi = row.querySelector('.kisiler');
+                const malzeme = row.cells[0]?.innerText;
+
+                let isim = prompt('Lütfen isminizi girin:');
+                if (isim) {
+                    isim = isim.trim().toLowerCase();
+                    if (isim === '') {
+                        alert('Geçerli bir isim girin!');
+                    } else {
+                        const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
+                        onValue(itemRef, (snapshot) => {
+                            if (snapshot.exists()) {
+                                alert('Bu malzeme zaten seçildi!');
+                            } else {
+                                set(itemRef, isim);
+                                kisiHucresi.textContent = isim;
+                                button.disabled = true;
+                                button.textContent = 'Seçildi';
+                                row.classList.add('taken');
+                            }
+                        }, { onlyOnce: true });
+                    }
+                } else {
+                    alert('Geçerli bir isim girin!');
+                }
+            };
+        };
+    </script>
 </head>
 <body>
     <h1>Kahvaltı Malzeme Seçimi</h1>
@@ -110,70 +182,5 @@
             </tr>
         </tbody>
     </table>
-
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyByAxwWtb2waRiSkCPcPHbDyDOSKRypwJw",
-            authDomain: "kahvalti-secim-sitesi.firebaseapp.com",
-            databaseURL: "https://kahvalti-secim-sitesi-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "kahvalti-secim-sitesi",
-            storageBucket: "kahvalti-secim-sitesi.appspot.com",
-            messagingSenderId: "1023667017125",
-            appId: "1:1023667017125:web:f4b4dbca4c31825ca2e24c"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // Load data from Firebase and update the table
-        database.ref('kahvaltiListesi').on('value', snapshot => {
-            const data = snapshot.val() || {};
-            const rows = document.querySelectorAll('#malzemeListesi tr');
-
-            rows.forEach(row => {
-                const malzeme = row.cells[0].innerText;
-                const kisiHucresi = row.querySelector('.kisiler');
-                const button = row.querySelector('button');
-
-                if (data[malzeme]) {
-                    kisiHucresi.textContent = data[malzeme];
-                    button.disabled = true;
-                    button.textContent = 'Seçildi';
-                    row.classList.add('taken');
-                }
-            });
-        });
-
-        // Handle button clicks to select an item
-        function secMalzeme(button) {
-            const row = button.parentElement.parentElement;
-            const kisiHucresi = row.querySelector('.kisiler');
-            const malzeme = row.cells[0].innerText;
-
-            let isim = prompt('Lütfen isminizi girin:');
-            if (isim) {
-                isim = isim.trim().toLowerCase();
-                if (isim === '') {
-                    alert('Geçerli bir isim girin!');
-                } else {
-                    database.ref('kahvaltiListesi/' + malzeme).once('value').then(snapshot => {
-                        if (snapshot.val()) {
-                            alert('Bu malzeme zaten seçildi!');
-                        } else {
-                            database.ref('kahvaltiListesi/' + malzeme).set(isim);
-                            kisiHucresi.textContent = isim;
-                            button.disabled = true;
-                            button.textContent = 'Seçildi';
-                            row.classList.add('taken');
-                        }
-                    });
-                }
-            } else {
-                alert('Geçerli bir isim girin!');
-            }
-        }
-    </script>
 </body>
 </html>
