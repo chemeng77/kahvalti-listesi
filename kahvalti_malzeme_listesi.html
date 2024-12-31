@@ -27,6 +27,8 @@
             background-color: #d4edda;
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
 </head>
 <body>
     <h1>Kahvaltı Etkinliği Malzeme Listesi</h1>
@@ -70,16 +72,56 @@
     </table>
 
     <script>
+        const firebaseConfig = {
+            apiKey: "AZaSyCyl...L36F14",
+            authDomain: "kahvalti-listesi.firebaseapp.com",
+            databaseURL: "https://kahvalti-listesi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "kahvalti-listesi",
+            storageBucket: "kahvalti-listesi.appspot.com",
+            messagingSenderId: "669172972890",
+            appId: "1:669172972890:web:374c9e62cf5ff305928763"
+        };
+
+        // Firebase'i başlat
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        firebase.database().ref('kahvaltiListesi').on('value', snapshot => {
+            const data = snapshot.val();
+            const rows = document.querySelectorAll('#malzemeListesi tr');
+
+            rows.forEach(row => {
+                const malzeme = row.cells[0].innerText;
+                const kisiHucresi = row.querySelector('.kisiler');
+                const button = row.querySelector('button');
+
+                if (data[malzeme] && data[malzeme] !== "") {
+                    kisiHucresi.textContent = data[malzeme];
+                    row.classList.add('taken');
+                    button.disabled = true;
+                    button.textContent = 'Seçildi';
+                }
+            });
+        });
+
         function secMalzeme(button) {
             const row = button.parentElement.parentElement;
+            const malzeme = row.cells[0].innerText;
             const kisiHucresi = row.querySelector('.kisiler');
 
             const isim = prompt('Lütfen isminizi girin:');
             if (isim && isim.trim() !== '') {
-                kisiHucresi.textContent = isim;
-                row.classList.add('taken');
-                button.disabled = true;
-                button.textContent = 'Seçildi';
+                firebase.database().ref('kahvaltiListesi/' + malzeme).once('value').then(snapshot => {
+                    if (snapshot.val()) {
+                        alert('Bu malzeme zaten seçildi!');
+                    } else {
+                        firebase.database().ref('kahvaltiListesi/' + malzeme).set(isim);
+                        kisiHucresi.textContent = isim;
+                        row.classList.add('taken');
+                        button.disabled = true;
+                        button.textContent = 'Seçildi';
+                    }
+                });
             } else {
                 alert('Geçerli bir isim girmeniz gerekiyor.');
             }
