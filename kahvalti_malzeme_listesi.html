@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahvaltı Etkinliği Listesi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .taken {
+            background-color: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kahvaltı Etkinliği Malzeme Listesi</h1>
+    <p>Lütfen getirmek istediğiniz malzemenin karşısına isminizi yazın. Bir malzeme seçildiğinde başka kimse o malzemeyi seçemez.</p>
+
+    <table id="malzemeListesi">
+        <thead>
+            <tr>
+                <th>Malzeme</th>
+                <th>Seçen Kişi</th>
+                <th>Aksiyon</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Ekmek</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Zeytin</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Peynir</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Domates</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Salatalık</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function secMalzeme(button) {
+            const row = button.parentElement.parentElement;
+            const kisiHucresi = row.querySelector('.kisiler');
+
+            const isim = prompt('Lütfen isminizi girin:');
+            if (isim && isim.trim() !== '') {
+                kisiHucresi.textContent = isim;
+                row.classList.add('taken');
+                button.disabled = true;
+                button.textContent = 'Seçildi';
+            } else {
+                alert('Geçerli bir isim girmeniz gerekiyor.');
+            }
+        }
+    </script>
+</body>
+</html>
