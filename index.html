@@ -40,7 +40,6 @@
     </style>
     <!-- Firebase SDK v9 -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
@@ -62,22 +61,21 @@
         window.onload = () => {
             const malzemeListesi = document.getElementById('malzemeListesi');
 
-            // Load data from Firebase and update the table
-            const dbRef = ref(database, 'kahvaltiListesi');
+            // Function to update table
             const updateTable = (data) => {
-                const rows = malzemeListesi.querySelectorAll('tr');
+                const rows = malzemeListesi.querySelectorAll('tbody tr');
 
                 rows.forEach((row) => {
                     const malzeme = row.cells[0]?.innerText;
                     const kisiHucresi = row.querySelector('.kisiler');
                     const button = row.querySelector('button');
 
-                    if (data[malzeme]) {
+                    if (malzeme && data[malzeme]) {
                         kisiHucresi.textContent = data[malzeme];
                         button.disabled = true;
                         button.textContent = 'Seçildi';
                         row.classList.add('taken');
-                    } else {
+                    } else if (malzeme) {
                         kisiHucresi.textContent = '';
                         button.disabled = false;
                         button.textContent = 'Seç';
@@ -86,7 +84,8 @@
                 });
             };
 
-            // Realtime listener to update table when data changes
+            // Realtime listener to update table
+            const dbRef = ref(database, 'kahvaltiListesi');
             onValue(dbRef, (snapshot) => {
                 const data = snapshot.val() || {};
                 updateTable(data);
@@ -100,17 +99,18 @@
 
                 let isim = prompt('Lütfen isminizi girin:');
                 if (isim) {
-                    isim = isim.trim().toLowerCase();
+                    isim = isim.trim();
                     if (isim === '') {
                         alert('Geçerli bir isim girin!');
-                    } else {
-                        const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
-                        set(itemRef, isim).then(() => {
-                            alert(`${malzeme} için seçim kaydedildi.`);
-                        }).catch((error) => {
-                            alert('Bir hata oluştu: ' + error.message);
-                        });
+                        return;
                     }
+
+                    const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
+                    set(itemRef, isim).then(() => {
+                        alert(`${malzeme} için seçim kaydedildi.`);
+                    }).catch((error) => {
+                        alert('Bir hata oluştu: ' + error.message);
+                    });
                 } else {
                     alert('Geçerli bir isim girin!');
                 }
