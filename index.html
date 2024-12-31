@@ -64,28 +64,32 @@
 
             // Load data from Firebase and update the table
             const dbRef = ref(database, 'kahvaltiListesi');
-            onValue(dbRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                const rows = malzemeListesi.querySelectorAll('tr');
+            const updateTable = () => {
+                onValue(dbRef, (snapshot) => {
+                    const data = snapshot.val() || {};
+                    const rows = malzemeListesi.querySelectorAll('tr');
 
-                rows.forEach((row) => {
-                    const malzeme = row.cells[0]?.innerText;
-                    const kisiHucresi = row.querySelector('.kisiler');
-                    const button = row.querySelector('button');
+                    rows.forEach((row) => {
+                        const malzeme = row.cells[0]?.innerText;
+                        const kisiHucresi = row.querySelector('.kisiler');
+                        const button = row.querySelector('button');
 
-                    if (data[malzeme]) {
-                        kisiHucresi.textContent = data[malzeme];
-                        button.disabled = true;
-                        button.textContent = 'Seçildi';
-                        row.classList.add('taken');
-                    } else {
-                        kisiHucresi.textContent = '';
-                        button.disabled = false;
-                        button.textContent = 'Seç';
-                        row.classList.remove('taken');
-                    }
+                        if (data[malzeme]) {
+                            kisiHucresi.textContent = data[malzeme];
+                            button.disabled = true;
+                            button.textContent = 'Seçildi';
+                            row.classList.add('taken');
+                        } else {
+                            kisiHucresi.textContent = '';
+                            button.disabled = false;
+                            button.textContent = 'Seç';
+                            row.classList.remove('taken');
+                        }
+                    });
                 });
-            });
+            };
+
+            updateTable();
 
             // Handle button clicks to select an item
             window.secMalzeme = (button) => {
@@ -100,17 +104,14 @@
                         alert('Geçerli bir isim girin!');
                     } else {
                         const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
-                        onValue(itemRef, (snapshot) => {
-                            if (snapshot.exists()) {
-                                alert('Bu malzeme zaten seçildi!');
-                            } else {
-                                set(itemRef, isim);
-                                kisiHucresi.textContent = isim;
-                                button.disabled = true;
-                                button.textContent = 'Seçildi';
-                                row.classList.add('taken');
-                            }
-                        }, { onlyOnce: true });
+                        set(itemRef, isim).then(() => {
+                            kisiHucresi.textContent = isim;
+                            button.disabled = true;
+                            button.textContent = 'Seçildi';
+                            row.classList.add('taken');
+                        }).catch((error) => {
+                            alert('Bir hata oluştu: ' + error.message);
+                        });
                     }
                 } else {
                     alert('Geçerli bir isim girin!');
@@ -120,9 +121,9 @@
             // Handle reset functionality
             window.sifirla = () => {
                 if (confirm('Tüm seçimleri sıfırlamak istediğinize emin misiniz?')) {
-                    const dbRef = ref(database, 'kahvaltiListesi');
                     remove(dbRef).then(() => {
                         alert('Tüm seçimler sıfırlandı!');
+                        updateTable(); // Tabloyu güncelle
                     }).catch((error) => {
                         alert('Sıfırlama sırasında bir hata oluştu: ' + error.message);
                     });
