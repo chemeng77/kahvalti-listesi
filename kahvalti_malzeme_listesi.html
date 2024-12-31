@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahvaltı Etkinliği Listesi</title>
+    <title>Kahvaltı Malzeme Seçimi</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            line-height: 1.6;
         }
         table {
             width: 100%;
@@ -27,34 +26,42 @@
             background-color: #d4edda;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
 </head>
 <body>
-    <h1>Kahvaltı Etkinliği Malzeme Listesi</h1>
-    <p>Lütfen getirmek istediğiniz malzemenin karşısına isminizi yazın. Bir malzeme seçildiğinde başka kimse o malzemeyi seçemez.</p>
+    <h1>Kahvaltı Malzeme Seçimi</h1>
+    <p>Getireceğiniz malzemenin karşısına adınızı yazın. Seçim yaptığınızda diğer kişiler bu malzemeyi seçemez.</p>
 
     <table id="malzemeListesi">
         <thead>
             <tr>
                 <th>Malzeme</th>
                 <th>Seçen Kişi</th>
-                <th>Aksiyon</th>
+                <th>Seçim</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>Ekmek</td>
+                <td>Beyaz Peynir</td>
                 <td class="kisiler"></td>
                 <td><button onclick="secMalzeme(this)">Seç</button></td>
             </tr>
             <tr>
-                <td>Zeytin</td>
+                <td>Börek</td>
                 <td class="kisiler"></td>
                 <td><button onclick="secMalzeme(this)">Seç</button></td>
             </tr>
             <tr>
-                <td>Peynir</td>
+                <td>Kaşar Peyniri</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Siyah Zeytin</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Salatalık</td>
                 <td class="kisiler"></td>
                 <td><button onclick="secMalzeme(this)">Seç</button></td>
             </tr>
@@ -64,7 +71,37 @@
                 <td><button onclick="secMalzeme(this)">Seç</button></td>
             </tr>
             <tr>
-                <td>Salatalık</td>
+                <td>Simit (15 Adet)</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Kaymak</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Nutella</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Aç Bitir Salam (Maks. 3 adet)</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Kuru Yemiş</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Biber</td>
+                <td class="kisiler"></td>
+                <td><button onclick="secMalzeme(this)">Seç</button></td>
+            </tr>
+            <tr>
+                <td>Yeşil Zeytin</td>
                 <td class="kisiler"></td>
                 <td><button onclick="secMalzeme(this)">Seç</button></td>
             </tr>
@@ -72,58 +109,28 @@
     </table>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AZaSyCyl...L36F14",
-            authDomain: "kahvalti-listesi.firebaseapp.com",
-            databaseURL: "https://kahvalti-listesi-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "kahvalti-listesi",
-            storageBucket: "kahvalti-listesi.appspot.com",
-            messagingSenderId: "669172972890",
-            appId: "1:669172972890:web:374c9e62cf5ff305928763"
-        };
-
-        // Firebase'i başlat
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        firebase.database().ref('kahvaltiListesi').on('value', snapshot => {
-            const data = snapshot.val();
-            const rows = document.querySelectorAll('#malzemeListesi tr');
-
-            rows.forEach(row => {
-                const malzeme = row.cells[0].innerText;
-                const kisiHucresi = row.querySelector('.kisiler');
-                const button = row.querySelector('button');
-
-                if (data[malzeme] && data[malzeme] !== "") {
-                    kisiHucresi.textContent = data[malzeme];
-                    row.classList.add('taken');
-                    button.disabled = true;
-                    button.textContent = 'Seçildi';
-                }
-            });
-        });
+        const kullanilanIsimler = new Set();
 
         function secMalzeme(button) {
             const row = button.parentElement.parentElement;
-            const malzeme = row.cells[0].innerText;
             const kisiHucresi = row.querySelector('.kisiler');
 
-            const isim = prompt('Lütfen isminizi girin:');
-            if (isim && isim.trim() !== '') {
-                firebase.database().ref('kahvaltiListesi/' + malzeme).once('value').then(snapshot => {
-                    if (snapshot.val()) {
-                        alert('Bu malzeme zaten seçildi!');
-                    } else {
-                        firebase.database().ref('kahvaltiListesi/' + malzeme).set(isim);
-                        kisiHucresi.textContent = isim;
-                        row.classList.add('taken');
-                        button.disabled = true;
-                        button.textContent = 'Seçildi';
-                    }
-                });
+            let isim = prompt('Lütfen isminizi girin:');
+            if (isim) {
+                isim = isim.trim().toLowerCase();
+                if (isim === '') {
+                    alert('Geçerli bir isim girin!');
+                } else if (kullanilanIsimler.has(isim)) {
+                    alert('Bu isim zaten bir malzeme için kullanıldı!');
+                } else {
+                    kullanilanIsimler.add(isim);
+                    kisiHucresi.textContent = isim;
+                    button.disabled = true;
+                    button.textContent = 'Seçildi';
+                    row.classList.add('taken');
+                }
             } else {
-                alert('Geçerli bir isim girmeniz gerekiyor.');
+                alert('Geçerli bir isim girin!');
             }
         }
     </script>
