@@ -25,12 +25,24 @@
         .taken {
             background-color: #d4edda;
         }
+        .reset-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .reset-button:hover {
+            background-color: #ff3333;
+        }
     </style>
     <!-- Firebase SDK v9 -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -66,6 +78,11 @@
                         button.disabled = true;
                         button.textContent = 'Seçildi';
                         row.classList.add('taken');
+                    } else {
+                        kisiHucresi.textContent = '';
+                        button.disabled = false;
+                        button.textContent = 'Seç';
+                        row.classList.remove('taken');
                     }
                 });
             });
@@ -97,6 +114,18 @@
                     }
                 } else {
                     alert('Geçerli bir isim girin!');
+                }
+            };
+
+            // Handle reset functionality
+            window.sifirla = () => {
+                if (confirm('Tüm seçimleri sıfırlamak istediğinize emin misiniz?')) {
+                    const dbRef = ref(database, 'kahvaltiListesi');
+                    remove(dbRef).then(() => {
+                        alert('Tüm seçimler sıfırlandı!');
+                    }).catch((error) => {
+                        alert('Sıfırlama sırasında bir hata oluştu: ' + error.message);
+                    });
                 }
             };
         };
@@ -182,5 +211,7 @@
             </tr>
         </tbody>
     </table>
+
+    <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
 </body>
 </html>
