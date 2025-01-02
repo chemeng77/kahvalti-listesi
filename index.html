@@ -52,11 +52,12 @@
             border-radius: 5px;
             background-color: #f9f9f9;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 250px;
         }
         .edit-pano-button {
             position: absolute;
-            top: 20px;
-            right: 150px;
+            top: 100px;
+            right: 20px;
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -188,16 +189,18 @@
 
             window.addMalzeme = () => {
                 const yeniMalzeme = prompt('Yeni malzemenin adını girin:');
-                if (yeniMalzeme) {
+                const kisi = prompt('Bu malzemeyi kim getirecek? İsim girin:');
+                if (yeniMalzeme && kisi) {
                     const formattedMalzeme = yeniMalzeme.trim();
+                    const formattedKisi = kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1);
                     const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
-                    set(itemRef, null).then(() => {
-                        alert(`${formattedMalzeme} listeye eklendi.`);
+                    set(itemRef, formattedKisi).then(() => {
+                        alert(`${formattedMalzeme} listeye ${formattedKisi} tarafından eklendi.`);
                     }).catch((error) => {
                         alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
                     });
                 } else {
-                    alert('Geçerli bir malzeme adı girin!');
+                    alert('Geçerli bir malzeme adı ve isim girin!');
                 }
             };
 
