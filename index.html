@@ -25,14 +25,20 @@
         .taken {
             background-color: #d4edda;
         }
-        .reset-button {
+        .reset-button, .add-button, .edit-button {
             margin-top: 20px;
             padding: 10px 20px;
-            background-color: #ff4d4d;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+        }
+        .reset-button:hover, .add-button:hover, .edit-button:hover {
+            background-color: #0056b3;
+        }
+        .reset-button {
+            background-color: #ff4d4d;
         }
         .reset-button:hover {
             background-color: #ff3333;
@@ -41,7 +47,7 @@
     <!-- Firebase SDK v9 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove, get, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -58,67 +64,74 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        const defaultMalzemeler = [
+            "Beyaz Peynir", "Börek", "Kaşar Peyniri", "Siyah Zeytin", "Salatalık", "Domates", "Simit (15 Adet)", "Kaymak", "Nutella", "Aç Bitir Salam (Maks. 3 adet)", "Kuru Yemiş", "Biber", "Yeşil Zeytin"
+        ];
+
         window.onload = () => {
             const malzemeListesi = document.getElementById('malzemeListesi');
+            const etkinlikPanosu = document.getElementById('etkinlikPanosu');
 
-            // Function to update table
+            const dbRef = ref(database, 'kahvaltiListesi');
+            const panoRef = ref(database, 'etkinlikPanosu');
+
             const updateTable = (data) => {
-                const rows = malzemeListesi.querySelectorAll('tbody tr');
+                malzemeListesi.innerHTML = '';
+                const allMalzemeler = { ...defaultMalzemeler.reduce((acc, item) => ({ ...acc, [item]: null }), {}), ...data };
 
-                rows.forEach((row) => {
-                    const malzeme = row.cells[0]?.innerText;
-                    const kisiHucresi = row.querySelector('.kisiler');
-                    const button = row.querySelector('button');
+                Object.entries(allMalzemeler).forEach(([malzeme, kisi]) => {
+                    const row = document.createElement('tr');
 
-                    if (malzeme && data[malzeme]) {
-                        kisiHucresi.textContent = data[malzeme];
-                        button.disabled = true;
-                        button.textContent = 'Seçildi';
-                        row.classList.add('taken');
-                    } else if (malzeme) {
-                        kisiHucresi.textContent = '';
-                        button.disabled = false;
-                        button.textContent = 'Seç';
-                        row.classList.remove('taken');
-                    }
+                    const malzemeCell = document.createElement('td');
+                    malzemeCell.textContent = malzeme;
+                    row.appendChild(malzemeCell);
+
+                    const kisiCell = document.createElement('td');
+                    kisiCell.textContent = kisi ? kisi.charAt(0).toUpperCase() + kisi.slice(1) : '';
+                    kisiCell.classList.add('kisiler');
+                    row.appendChild(kisiCell);
+
+                    const buttonCell = document.createElement('td');
+                    const button = document.createElement('button');
+                    button.textContent = kisi ? 'Seçildi' : 'Seç';
+                    button.disabled = !!kisi;
+                    button.onclick = () => secMalzeme(malzeme);
+                    buttonCell.appendChild(button);
+                    row.appendChild(buttonCell);
+
+                    malzemeListesi.appendChild(row);
                 });
             };
 
-            // Realtime listener to update table
-            const dbRef = ref(database, 'kahvaltiListesi');
+            const updatePano = (data) => {
+                etkinlikPanosu.textContent = data ? `Tarih: ${data.tarih || ''}, Saat: ${data.saat || ''}, Yer: ${data.yer || ''}` : 'Bilgiler girilmedi.';
+            };
+
             onValue(dbRef, (snapshot) => {
                 const data = snapshot.val() || {};
                 updateTable(data);
             });
 
-            // Handle button clicks to select an item
-            window.secMalzeme = async (button) => {
-                const row = button.parentElement.parentElement;
-                const kisiHucresi = row.querySelector('.kisiler');
-                const malzeme = row.cells[0]?.innerText;
+            onValue(panoRef, (snapshot) => {
+                const data = snapshot.val();
+                updatePano(data);
+            });
 
-                let isim = prompt('Lütfen isminizi girin:');
+            window.secMalzeme = async (malzeme) => {
+                const isim = prompt('Lütfen isminizi girin:');
                 if (isim) {
-                    isim = isim.trim();
-                    if (isim === '') {
-                        alert('Geçerli bir isim girin!');
-                        return;
-                    }
+                    const formattedIsim = isim.trim().charAt(0).toUpperCase() + isim.trim().slice(1);
 
-                    // Check if the user has already selected another item
                     const snapshot = await get(dbRef);
                     const data = snapshot.val() || {};
 
-                    const alreadySelected = Object.entries(data).find(([key, value]) => value === isim);
-
-                    if (alreadySelected) {
-                        alert(`Bu isim (${isim}) zaten "${alreadySelected[0]}" için seçim yapmış!`);
+                    if (Object.values(data).includes(formattedIsim)) {
+                        alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
                         return;
                     }
 
-                    // Save the selection
                     const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
-                    set(itemRef, isim).then(() => {
+                    set(itemRef, formattedIsim).then(() => {
                         alert(`${malzeme} için seçim kaydedildi.`);
                     }).catch((error) => {
                         alert('Bir hata oluştu: ' + error.message);
@@ -128,13 +141,54 @@
                 }
             };
 
-            // Handle reset functionality
             window.sifirla = () => {
-                if (confirm('Tüm seçimleri sıfırlamak istediğinize emin misiniz?')) {
+                if (confirm('Tüm seçimleri ve eklenen malzemeleri sıfırlamak istediğinize emin misiniz?')) {
                     remove(dbRef).then(() => {
-                        alert('Tüm seçimler sıfırlandı!');
+                        alert('Tüm seçimler ve eklenen malzemeler sıfırlandı!');
                     }).catch((error) => {
                         alert('Sıfırlama sırasında bir hata oluştu: ' + error.message);
+                    });
+
+                    remove(panoRef).then(() => {
+                        alert('Etkinlik bilgileri sıfırlandı!');
+                    }).catch((error) => {
+                        alert('Etkinlik bilgileri sıfırlanırken bir hata oluştu: ' + error.message);
+                    });
+                }
+            };
+
+            window.addMalzeme = () => {
+                const yeniMalzeme = prompt('Yeni malzemenin adını girin:');
+                if (yeniMalzeme) {
+                    const formattedMalzeme = yeniMalzeme.trim();
+                    set(ref(database, `kahvaltiListesi/${formattedMalzeme}`), null).then(() => {
+                        alert(`${formattedMalzeme} listeye eklendi.`);
+                    }).catch((error) => {
+                        alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
+                    });
+                } else {
+                    alert('Geçerli bir malzeme adı girin!');
+                }
+            };
+
+            window.editPano = () => {
+                const tarih = prompt('Etkinlik tarihi (GG/AA/YYYY):');
+                const saat = prompt('Etkinlik saati (SS:DD):');
+                const yer = prompt('Etkinlik yeri:');
+
+                update(panoRef, { tarih, saat, yer }).then(() => {
+                    alert('Etkinlik bilgileri güncellendi!');
+                }).catch((error) => {
+                    alert('Etkinlik bilgileri güncellenirken bir hata oluştu: ' + error.message);
+                });
+            };
+
+            window.editMalzeme = (malzeme) => {
+                if (confirm(`${malzeme} seçimini silmek istediğinizden emin misiniz?`)) {
+                    set(ref(database, `kahvaltiListesi/${malzeme}`), null).then(() => {
+                        alert(`${malzeme} seçimi silindi.`);
+                    }).catch((error) => {
+                        alert('Seçim silinirken bir hata oluştu: ' + error.message);
                     });
                 }
             };
@@ -146,82 +200,13 @@
     <p>Getireceğiniz malzemenin karşısına adınızı yazın. Seçim yaptığınızda diğer kişiler bu malzemeyi seçemez.</p>
 
     <table id="malzemeListesi">
-        <thead>
-            <tr>
-                <th>Malzeme</th>
-                <th>Seçen Kişi</th>
-                <th>Seçim</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Beyaz Peynir</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Börek</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Kaşar Peyniri</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Siyah Zeytin</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Salatalık</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Domates</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Simit (15 Adet)</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Kaymak</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Nutella</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Aç Bitir Salam (Maks. 3 adet)</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Kuru Yemiş</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Biber</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-            <tr>
-                <td>Yeşil Zeytin</td>
-                <td class="kisiler"></td>
-                <td><button onclick="secMalzeme(this)">Seç</button></td>
-            </tr>
-        </tbody>
     </table>
 
+    <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
     <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
+
+    <h2>Etkinlik Bilgileri</h2>
+    <div id="etkinlikPanosu">Bilgiler girilmedi.</div>
+    <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
 </body>
 </html>
