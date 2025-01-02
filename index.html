@@ -57,6 +57,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            gap: 5px;
         }
         #etkinlikPanosu div {
             display: flex;
@@ -75,6 +76,9 @@
         }
         .edit-pano-button:hover {
             background-color: #0056b3;
+        }
+        #malzemeListesi {
+            margin-top: 180px; /* To prevent overlap with etkinlikPanosu */
         }
     </style>
     <!-- Firebase SDK v9 -->
@@ -98,7 +102,7 @@
         const database = getDatabase(app);
 
         const defaultMalzemeler = [
-            "Beyaz Peynir", "Börek", "Kaşar Peyniri", "Siyah Zeytin", "Salatalık", "Domates", "Simit (15 Adet)", "Kaymak", "Nutella", "Aç Bitir Salam (Maks. 3 adet)", "Kuru Yemiş", "Biber", "Yeşil Zeytin"
+            "Beyaz Peynir", "Börek", "Kaşar Peynir", "Siyah Zeytin", "Salatalık", "Domates", "Simit (15 Adet)", "Kaymak", "Nutella", "Aç Bitir Salam (Maks. 3 adet)", "Kuru Yemiş", "Biber", "Yeşil Zeytin"
         ];
 
         window.onload = () => {
