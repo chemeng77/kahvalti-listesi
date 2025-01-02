@@ -43,6 +43,16 @@
         .reset-button:hover {
             background-color: #ff3333;
         }
+        #etkinlikPanosu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
     </style>
     <!-- Firebase SDK v9 -->
     <script type="module">
@@ -98,6 +108,13 @@
                     button.onclick = () => secMalzeme(malzeme);
                     buttonCell.appendChild(button);
                     row.appendChild(buttonCell);
+
+                    const editCell = document.createElement('td');
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Düzenle';
+                    editButton.onclick = () => editMalzeme(malzeme);
+                    editCell.appendChild(editButton);
+                    row.appendChild(editCell);
 
                     malzemeListesi.appendChild(row);
                 });
@@ -161,7 +178,8 @@
                 const yeniMalzeme = prompt('Yeni malzemenin adını girin:');
                 if (yeniMalzeme) {
                     const formattedMalzeme = yeniMalzeme.trim();
-                    set(ref(database, `kahvaltiListesi/${formattedMalzeme}`), null).then(() => {
+                    const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
+                    set(itemRef, null).then(() => {
                         alert(`${formattedMalzeme} listeye eklendi.`);
                     }).catch((error) => {
                         alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
@@ -205,7 +223,6 @@
     <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
     <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
 
-    <h2>Etkinlik Bilgileri</h2>
     <div id="etkinlikPanosu">Bilgiler girilmedi.</div>
     <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
 </body>
