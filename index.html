@@ -108,9 +108,9 @@
 
             const updateTable = (data) => {
                 malzemeListesi.innerHTML = '';
-                const allMalzemeler = { ...defaultMalzemeler.reduce((acc, item) => ({ ...acc, [item]: null }), {}), ...data };
+                const allMalzemeler = { ...defaultMalzemeler.reduce((acc, item) => ({ ...acc, [item]: [] }), {}), ...data };
 
-                Object.entries(allMalzemeler).forEach(([malzeme, kisi]) => {
+                Object.entries(allMalzemeler).forEach(([malzeme, kisiler]) => {
                     const row = document.createElement('tr');
 
                     const malzemeCell = document.createElement('td');
@@ -118,14 +118,14 @@
                     row.appendChild(malzemeCell);
 
                     const kisiCell = document.createElement('td');
-                    kisiCell.textContent = kisi ? kisi.charAt(0).toUpperCase() + kisi.slice(1) : '';
+                    kisiCell.textContent = Array.isArray(kisiler) ? kisiler.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(', ') : '';
                     kisiCell.classList.add('kisiler');
                     row.appendChild(kisiCell);
 
                     const buttonCell = document.createElement('td');
                     const button = document.createElement('button');
-                    button.textContent = kisi ? 'Seçildi' : 'Seç';
-                    button.disabled = !!kisi;
+                    button.textContent = kisiler && kisiler.length >= (malzeme === 'Börek' ? 3 : 1) ? 'Seçildi' : 'Seç';
+                    button.disabled = kisiler && kisiler.length >= (malzeme === 'Börek' ? 3 : 1);
                     button.onclick = () => secMalzeme(malzeme);
                     buttonCell.appendChild(button);
 
@@ -164,14 +164,21 @@
 
                     const snapshot = await get(dbRef);
                     const data = snapshot.val() || {};
+                    const kisiler = data[malzeme] || [];
 
-                    if (Object.values(data).includes(formattedIsim)) {
+                    if (Object.values(data).flat().includes(formattedIsim)) {
                         alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
                         return;
                     }
 
+                    if (kisiler.length >= (malzeme === 'Börek' ? 3 : 1)) {
+                        alert(`${malzeme} için maksimum kişi sayısına ulaşıldı!`);
+                        return;
+                    }
+
+                    kisiler.push(formattedIsim);
                     const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
-                    set(itemRef, formattedIsim).then(() => {
+                    set(itemRef, kisiler).then(() => {
                         alert(`${malzeme} için seçim kaydedildi.`);
                     }).catch((error) => {
                         alert('Bir hata oluştu: ' + error.message);
@@ -204,7 +211,7 @@
                     const formattedMalzeme = yeniMalzeme.trim();
                     const formattedKisi = kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1);
                     const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
-                    set(itemRef, formattedKisi).then(() => {
+                    set(itemRef, [formattedKisi]).then(() => {
                         alert(`${formattedMalzeme} listeye ${formattedKisi} tarafından eklendi.`);
                     }).catch((error) => {
                         alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
@@ -228,7 +235,7 @@
 
             window.editMalzeme = (malzeme) => {
                 if (confirm(`${malzeme} seçimini silmek istediğinizden emin misiniz?`)) {
-                    set(ref(database, `kahvaltiListesi/${malzeme}`), null).then(() => {
+                    set(ref(database, `kahvaltiListesi/${malzeme}`), []).then(() => {
                         alert(`${malzeme} seçimi silindi.`);
                     }).catch((error) => {
                         alert('Seçim silinirken bir hata oluştu: ' + error.message);
