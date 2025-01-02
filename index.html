@@ -41,7 +41,7 @@
     <!-- Firebase SDK v9 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -92,7 +92,7 @@
             });
 
             // Handle button clicks to select an item
-            window.secMalzeme = (button) => {
+            window.secMalzeme = async (button) => {
                 const row = button.parentElement.parentElement;
                 const kisiHucresi = row.querySelector('.kisiler');
                 const malzeme = row.cells[0]?.innerText;
@@ -105,6 +105,18 @@
                         return;
                     }
 
+                    // Check if the user has already selected another item
+                    const snapshot = await get(dbRef);
+                    const data = snapshot.val() || {};
+
+                    const alreadySelected = Object.entries(data).find(([key, value]) => value === isim);
+
+                    if (alreadySelected) {
+                        alert(`Bu isim (${isim}) zaten "${alreadySelected[0]}" için seçim yapmış!`);
+                        return;
+                    }
+
+                    // Save the selection
                     const itemRef = ref(database, `kahvaltiListesi/${malzeme}`);
                     set(itemRef, isim).then(() => {
                         alert(`${malzeme} için seçim kaydedildi.`);
