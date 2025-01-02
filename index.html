@@ -53,6 +53,20 @@
             background-color: #f9f9f9;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
+        .edit-pano-button {
+            position: absolute;
+            top: 20px;
+            right: 150px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .edit-pano-button:hover {
+            background-color: #0056b3;
+        }
     </style>
     <!-- Firebase SDK v9 -->
     <script type="module">
@@ -107,15 +121,13 @@
                     button.disabled = !!kisi;
                     button.onclick = () => secMalzeme(malzeme);
                     buttonCell.appendChild(button);
-                    row.appendChild(buttonCell);
 
-                    const editCell = document.createElement('td');
                     const editButton = document.createElement('button');
-                    editButton.textContent = 'Düzenle';
+                    editButton.textContent = 'Seçimi Kaldır';
                     editButton.onclick = () => editMalzeme(malzeme);
-                    editCell.appendChild(editButton);
-                    row.appendChild(editCell);
+                    buttonCell.appendChild(editButton);
 
+                    row.appendChild(buttonCell);
                     malzemeListesi.appendChild(row);
                 });
             };
@@ -224,6 +236,6 @@
     <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
 
     <div id="etkinlikPanosu">Bilgiler girilmedi.</div>
-    <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
+    <button class="edit-pano-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
 </body>
 </html>
