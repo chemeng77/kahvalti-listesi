@@ -96,7 +96,7 @@
         const database = getDatabase(app);
 
         const defaultMalzemeler = [
-            "Beyaz Peynir", "Börek", "Kaşar Peynir", "Siyah Zeytin", "Salatalık", "Domates", "Simit (15 Adet)", "Kaymak", "Nutella", "Aç Bitir Salam (Maks. 3 adet)", "Kuru Yemiş", "Biber", "Yeşil Zeytin"
+            "Beyaz Peynir", "Börek (3 kişiye kadar seçilebilir)", "Kaşar Peynir", "Siyah Zeytin", "Salatalık", "Domates", "Simit (15 Adet)", "Kaymak", "Nutella", "Aç Bitir Salam (Maks. 3 adet)", "Kuru Yemiş", "Biber", "Yeşil Zeytin"
         ];
 
         window.onload = () => {
@@ -124,8 +124,8 @@
 
                     const buttonCell = document.createElement('td');
                     const button = document.createElement('button');
-                    button.textContent = kisiler && kisiler.length >= (malzeme === 'Börek' ? 3 : 1) ? 'Seçildi' : 'Seç';
-                    button.disabled = kisiler && kisiler.length >= (malzeme === 'Börek' ? 3 : 1);
+                    button.textContent = kisiler && kisiler.length >= (malzeme.startsWith('Börek') ? 3 : 1) ? 'Seçildi' : 'Seç';
+                    button.disabled = kisiler && kisiler.length >= (malzeme.startsWith('Börek') ? 3 : 1);
                     button.onclick = () => secMalzeme(malzeme);
                     buttonCell.appendChild(button);
 
@@ -171,7 +171,7 @@
                         return;
                     }
 
-                    if (kisiler.length >= (malzeme === 'Börek' ? 3 : 1)) {
+                    if (kisiler.length >= (malzeme.startsWith('Börek') ? 3 : 1)) {
                         alert(`${malzeme} için maksimum kişi sayısına ulaşıldı!`);
                         return;
                     }
