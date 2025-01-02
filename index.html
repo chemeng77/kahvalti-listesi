@@ -27,6 +27,7 @@
         }
         .reset-button, .add-button, .edit-button {
             margin-top: 20px;
+            margin-right: 10px;
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -47,38 +48,18 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            width: 250px;
-            height: 150px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: space-between;
-            gap: 5px;
+            gap: 10px;
         }
-        #etkinlikPanosu div {
-            display: flex;
-            justify-content: space-between;
-        }
-        .edit-pano-button {
-            position: absolute;
-            top: 20px;
-            right: 290px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .edit-pano-button:hover {
-            background-color: #0056b3;
-        }
-        #malzemeListesi {
-            margin-top: 180px; /* To prevent overlap with etkinlikPanosu */
+        #etkinlikPanosu span {
+            margin: 0 5px;
         }
     </style>
     <!-- Firebase SDK v9 -->
@@ -147,9 +128,9 @@
 
             const updatePano = (data) => {
                 etkinlikPanosu.innerHTML = `
-                    <div><span>Tarih:</span><span>${data?.tarih || ''}</span></div>
-                    <div><span>Saat:</span><span>${data?.saat || ''}</span></div>
-                    <div><span>Yer:</span><span>${data?.yer || ''}</span></div>
+                    <span><b>Tarih:</b> ${data?.tarih || ''}</span>
+                    <span><b>Saat:</b> ${data?.saat || ''}</span>
+                    <span><b>Yer:</b> ${data?.yer || ''}</span>
                 `;
             };
 
@@ -248,17 +229,13 @@
     <h1>Kahvaltı Malzeme Seçimi</h1>
     <p>Getireceğiniz malzemenin karşısına adınızı yazın. Seçim yaptığınızda diğer kişiler bu malzemeyi seçemez.</p>
 
+    <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
+    <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
+    <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
+
     <table id="malzemeListesi">
     </table>
 
-    <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
-    <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
-
-    <div id="etkinlikPanosu">
-        <div><span>Tarih:</span><span></span></div>
-        <div><span>Saat:</span><span></span></div>
-        <div><span>Yer:</span><span></span></div>
-    </div>
-    <button class="edit-pano-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
+    <div id="etkinlikPanosu"></div>
 </body>
 </html>
