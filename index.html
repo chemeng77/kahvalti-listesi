@@ -25,9 +25,7 @@
         .taken {
             background-color: #d4edda;
         }
-        .reset-button, .add-button, .edit-button {
-            margin-top: 20px;
-            margin-right: 10px;
+        .add-button, .reset-button, .edit-button {
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -35,14 +33,29 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .reset-button:hover, .add-button:hover, .edit-button:hover {
-            background-color: #0056b3;
-        }
         .reset-button {
             background-color: #ff4d4d;
         }
         .reset-button:hover {
             background-color: #ff3333;
+        }
+        .add-button:hover, .edit-button:hover {
+            background-color: #0056b3;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .left-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .add-button:before {
+            content: "+ ";
+        }
+        .edit-button:before {
+            content: "✎ ";
         }
         #etkinlikPanosu {
             position: absolute;
@@ -229,12 +242,16 @@
     <h1>Kahvaltı Malzeme Seçimi</h1>
     <p>Getireceğiniz malzemenin karşısına adınızı yazın. Seçim yaptığınızda diğer kişiler bu malzemeyi seçemez.</p>
 
-    <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
-    <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
-    <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
-
     <table id="malzemeListesi">
     </table>
+
+    <div class="button-container">
+        <div class="left-buttons">
+            <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
+            <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
+        </div>
+        <button class="reset-button" onclick="sifirla()">Tüm Seçimleri Sıfırla</button>
+    </div>
 
     <div id="etkinlikPanosu"></div>
 </body>
