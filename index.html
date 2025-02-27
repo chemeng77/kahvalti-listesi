@@ -95,7 +95,7 @@
       const app = initializeApp(firebaseConfig);
       const database = getDatabase(app);
 
-      // Default malzemeler: her biri için veritabanı anahtarı (key), gösterim adı (label) ve seçim limiti (max)
+      // Default malzemeler: veritabanı anahtarı (key), gösterim adı (label) ve seçim limiti (max)
       const defaultMalzemeler = [
           { key: "beyaz_peynir", label: "Beyaz Peynir", max: 1 },
           { key: "borek", label: "Börek (3 kişiye kadar seçilebilir)", max: 3 },
@@ -109,7 +109,8 @@
           { key: "ac_bitir_salam", label: "Aç Bitir Salam (Maks. 3 adet)", max: 1 },
           { key: "kuru_yemis", label: "Kuru Yemiş", max: 1 },
           { key: "biber", label: "Biber", max: 1 },
-          { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 }
+          { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 },
+          { key: "bal", label: "Bal", max: 1 }  <!-- Yeni eklenen malzeme -->
       ];
 
       window.onload = () => {
