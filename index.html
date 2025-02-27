@@ -75,225 +75,12 @@
           margin: 0 5px;
       }
   </style>
-  <!-- Firebase SDK v9 -->
-  <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-      import { getDatabase, ref, onValue, set, remove, get, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
-
-      // Firebase yapılandırma
-      const firebaseConfig = {
-          apiKey: "AIzaSyByAxwWtb2waRiSkCPcPHbDyDOSKRypwJw",
-          authDomain: "kahvalti-secim-sitesi.firebaseapp.com",
-          databaseURL: "https://kahvalti-secim-sitesi-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "kahvalti-secim-sitesi",
-          storageBucket: "kahvalti-secim-sitesi.appspot.com",
-          messagingSenderId: "1023667017125",
-          appId: "1:1023667017125:web:f4b4dbca4c31825ca2e24c"
-      };
-
-      // Firebase'i başlat
-      const app = initializeApp(firebaseConfig);
-      const database = getDatabase(app);
-
-      // Default malzemeler: veritabanı anahtarı (key), gösterim adı (label) ve seçim limiti (max)
-      const defaultMalzemeler = [
-          { key: "beyaz_peynir", label: "Beyaz Peynir", max: 1 },
-          { key: "borek", label: "Börek (3 kişiye kadar seçilebilir)", max: 3 },
-          { key: "kasar_peynir", label: "Kaşar Peynir", max: 1 },
-          { key: "siyah_zeytin", label: "Siyah Zeytin", max: 1 },
-          { key: "salatalik", label: "Salatalık", max: 1 },
-          { key: "domates", label: "Domates", max: 1 },
-          { key: "simit", label: "Simit (15 Adet)", max: 1 },
-          { key: "kaymak", label: "Kaymak", max: 1 },
-          { key: "nutella", label: "Nutella", max: 1 },
-          { key: "ac_bitir_salam", label: "Aç Bitir Salam (Maks. 3 adet)", max: 1 },
-          { key: "kuru_yemis", label: "Kuru Yemiş", max: 1 },
-          { key: "biber", label: "Biber", max: 1 },
-          { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 },
-          { key: "bal", label: "Bal", max: 1 }  <!-- Yeni eklenen malzeme -->
-      ];
-
-      window.onload = () => {
-          const malzemeListesi = document.getElementById('malzemeListesi');
-          const etkinlikPanosu = document.getElementById('etkinlikPanosu');
-
-          const dbRef = ref(database, 'kahvaltiListesi');
-          const panoRef = ref(database, 'etkinlikPanosu');
-
-          // Tabloyu güncelleyen fonksiyon
-          const updateTable = (data) => {
-              malzemeListesi.innerHTML = '';
-
-              // Default malzemeleri key bazında içeren obje oluşturuluyor
-              const defaultData = defaultMalzemeler.reduce((acc, item) => {
-                  acc[item.key] = [];
-                  return acc;
-              }, {});
-              // Firebase'den gelen verilerle birleştiriliyor
-              const allMalzemeler = { ...defaultData, ...data };
-
-              Object.entries(allMalzemeler).forEach(([key, kisiler]) => {
-                  // Default listede varsa malzemenin etiketini ve limitini al, yoksa key'i kullan
-                  const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { key: key, label: key, max: 1 };
-
-                  const row = document.createElement('tr');
-
-                  const malzemeCell = document.createElement('td');
-                  malzemeCell.textContent = malzemeObj.label;
-                  row.appendChild(malzemeCell);
-
-                  const kisiCell = document.createElement('td');
-                  kisiCell.textContent = Array.isArray(kisiler) ? kisiler.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(', ') : '';
-                  kisiCell.classList.add('kisiler');
-                  row.appendChild(kisiCell);
-
-                  const buttonCell = document.createElement('td');
-                  const button = document.createElement('button');
-                  button.textContent = kisiler && kisiler.length >= malzemeObj.max ? 'Seçildi' : 'Seç';
-                  button.disabled = kisiler && kisiler.length >= malzemeObj.max;
-                  button.onclick = () => secMalzeme(key);
-                  buttonCell.appendChild(button);
-
-                  const editButton = document.createElement('button');
-                  editButton.textContent = 'Seçimi Kaldır';
-                  editButton.onclick = () => editMalzeme(key);
-                  buttonCell.appendChild(editButton);
-
-                  row.appendChild(buttonCell);
-                  malzemeListesi.appendChild(row);
-              });
-          };
-
-          // Etkinlik panosunu güncelleyen fonksiyon
-          const updatePano = (data) => {
-              etkinlikPanosu.innerHTML = `
-                  <span><b>Tarih:</b> ${data?.tarih || ''}</span>
-                  <span><b>Saat:</b> ${data?.saat || ''}</span>
-                  <span><b>Yer:</b> ${data?.yer || ''}</span>
-              `;
-          };
-
-          onValue(dbRef, (snapshot) => {
-              const data = snapshot.val() || {};
-              updateTable(data);
-          });
-
-          onValue(panoRef, (snapshot) => {
-              const data = snapshot.val();
-              updatePano(data);
-          });
-
-          // Malzeme seçim fonksiyonu
-          window.secMalzeme = async (key) => {
-              const isim = prompt('Lütfen isminizi girin:');
-              if (isim) {
-                  const formattedIsim = isim.trim().charAt(0).toUpperCase() + isim.trim().slice(1);
-
-                  const snapshot = await get(dbRef);
-                  const data = snapshot.val() || {};
-                  const kisiler = data[key] || [];
-
-                  // İsim, başka bir malzeme için zaten seçilmişse uyarı ver
-                  if (Object.values(data).flat().includes(formattedIsim)) {
-                      alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
-                      return;
-                  }
-
-                  const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key, max: 1 };
-                  if (kisiler.length >= malzemeObj.max) {
-                      alert(`${malzemeObj.label} için maksimum kişi sayısına ulaşıldı!`);
-                      return;
-                  }
-
-                  kisiler.push(formattedIsim);
-                  const itemRef = ref(database, `kahvaltiListesi/${key}`);
-                  set(itemRef, kisiler)
-                      .then(() => {
-                          alert(`${malzemeObj.label} için seçim kaydedildi.`);
-                      })
-                      .catch((error) => {
-                          alert('Bir hata oluştu: ' + error.message);
-                      });
-              } else {
-                  alert('Geçerli bir isim girin!');
-              }
-          };
-
-          // Tüm seçimleri ve eklenen malzemeleri sıfırlama fonksiyonu
-          window.sifirla = () => {
-              if (confirm('Tüm seçimleri ve eklenen malzemeleri sıfırlamak istediğinize emin misiniz?')) {
-                  remove(dbRef).then(() => {
-                      alert('Tüm seçimler ve eklenen malzemeler sıfırlandı!');
-                  }).catch((error) => {
-                      alert('Sıfırlama sırasında bir hata oluştu: ' + error.message);
-                  });
-
-                  remove(panoRef).then(() => {
-                      alert('Etkinlik bilgileri sıfırlandı!');
-                  }).catch((error) => {
-                      alert('Etkinlik bilgileri sıfırlanırken bir hata oluştu: ' + error.message);
-                  });
-              }
-          };
-
-          // Yeni malzeme ekleme fonksiyonu
-          window.addMalzeme = () => {
-              const yeniMalzeme = prompt('Yeni malzemenin adını girin:');
-              const kisi = prompt('Bu malzemeyi kim getirecek? İsim girin:');
-              if (yeniMalzeme && kisi) {
-                  const formattedMalzeme = yeniMalzeme.trim();
-                  const formattedKisi = kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1);
-                  // Kullanıcı tarafından eklenen malzemeler için key, doğrudan malzeme adı olarak kullanılıyor
-                  const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
-                  set(itemRef, [formattedKisi])
-                      .then(() => {
-                          alert(`${formattedMalzeme} listeye ${formattedKisi} tarafından eklendi.`);
-                      })
-                      .catch((error) => {
-                          alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
-                      });
-              } else {
-                  alert('Geçerli bir malzeme adı ve isim girin!');
-              }
-          };
-
-          // Etkinlik panosu düzenleme fonksiyonu
-          window.editPano = () => {
-              const tarih = prompt('Etkinlik tarihi (GG/AA/YYYY):');
-              const saat = prompt('Etkinlik saati (SS:DD):');
-              const yer = prompt('Etkinlik yeri:');
-
-              update(panoRef, { tarih, saat, yer })
-                  .then(() => {
-                      alert('Etkinlik bilgileri güncellendi!');
-                  })
-                  .catch((error) => {
-                      alert('Etkinlik bilgileri güncellenirken bir hata oluştu: ' + error.message);
-                  });
-          };
-
-          // Malzeme seçimini iptal etme fonksiyonu
-          window.editMalzeme = (key) => {
-              const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key };
-              if (confirm(`${malzemeObj.label} seçimini silmek istediğinizden emin misiniz?`)) {
-                  set(ref(database, `kahvaltiListesi/${key}`), [])
-                      .then(() => {
-                          alert(`${malzemeObj.label} seçimi silindi.`);
-                      })
-                      .catch((error) => {
-                          alert('Seçim silinirken bir hata oluştu: ' + error.message);
-                      });
-              }
-          };
-      };
-  </script>
 </head>
 <body>
   <h1>Kahvaltı Malzeme Seçimi</h1>
   <p>Getireceğiniz malzemenin karşısına adınızı yazın. Seçim yaptığınızda diğer kişiler bu malzemeyi seçemez.</p>
 
-  <table id="malzemeListesi">
-  </table>
+  <table id="malzemeListesi"></table>
 
   <div class="button-container">
       <div class="left-buttons">
@@ -304,5 +91,221 @@
   </div>
 
   <div id="etkinlikPanosu"></div>
+
+  <!-- Kullanmak istersen, bu yorumu <script> dışında tut -->
+  <script type="module">
+    // Firebase SDK v9 import
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, get, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+
+    // Firebase yapılandırma
+    const firebaseConfig = {
+      apiKey: "AIzaSy...",
+      authDomain: "kahvalti-secim-sitesi.firebaseapp.com",
+      databaseURL: "https://kahvalti-secim-sitesi-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "kahvalti-secim-sitesi",
+      storageBucket: "kahvalti-secim-sitesi.appspot.com",
+      messagingSenderId: "1023667017125",
+      appId: "1:1023667017125:web:f4b4dbca4c31825ca2e24c"
+    };
+
+    // Firebase'i başlat
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Default malzemeler: veritabanı anahtarı (key), gösterim adı (label) ve seçim limiti (max)
+    const defaultMalzemeler = [
+      { key: "beyaz_peynir", label: "Beyaz Peynir", max: 1 },
+      { key: "borek", label: "Börek (3 kişiye kadar seçilebilir)", max: 3 },
+      { key: "kasar_peynir", label: "Kaşar Peynir", max: 1 },
+      { key: "siyah_zeytin", label: "Siyah Zeytin", max: 1 },
+      { key: "salatalik", label: "Salatalık", max: 1 },
+      { key: "domates", label: "Domates", max: 1 },
+      { key: "simit", label: "Simit (15 Adet)", max: 1 },
+      { key: "kaymak", label: "Kaymak", max: 1 },
+      { key: "nutella", label: "Nutella", max: 1 },
+      { key: "ac_bitir_salam", label: "Aç Bitir Salam (Maks. 3 adet)", max: 1 },
+      { key: "kuru_yemis", label: "Kuru Yemiş", max: 1 },
+      { key: "biber", label: "Biber", max: 1 },
+      { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 },
+      { key: "bal", label: "Bal", max: 1 } // Bal malzemesi
+    ];
+
+    const malzemeListesi = document.getElementById('malzemeListesi');
+    const etkinlikPanosu = document.getElementById('etkinlikPanosu');
+
+    const dbRef = ref(database, 'kahvaltiListesi');
+    const panoRef = ref(database, 'etkinlikPanosu');
+
+    // Tabloyu güncelleyen fonksiyon
+    const updateTable = (data) => {
+      malzemeListesi.innerHTML = '';
+
+      // Default malzemeleri key bazında içeren obje oluşturuluyor
+      const defaultData = defaultMalzemeler.reduce((acc, item) => {
+        acc[item.key] = [];
+        return acc;
+      }, {});
+
+      // Firebase'den gelen verilerle birleştiriliyor
+      const allMalzemeler = { ...defaultData, ...data };
+
+      Object.entries(allMalzemeler).forEach(([key, kisiler]) => {
+        // Default listede varsa malzemenin etiketini ve limitini al, yoksa key'i kullan
+        const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { key: key, label: key, max: 1 };
+
+        const row = document.createElement('tr');
+
+        const malzemeCell = document.createElement('td');
+        malzemeCell.textContent = malzemeObj.label;
+        row.appendChild(malzemeCell);
+
+        const kisiCell = document.createElement('td');
+        kisiCell.textContent = Array.isArray(kisiler)
+          ? kisiler.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(', ')
+          : '';
+        kisiCell.classList.add('kisiler');
+        row.appendChild(kisiCell);
+
+        const buttonCell = document.createElement('td');
+        const button = document.createElement('button');
+        button.textContent = kisiler && kisiler.length >= malzemeObj.max ? 'Seçildi' : 'Seç';
+        button.disabled = kisiler && kisiler.length >= malzemeObj.max;
+        button.onclick = () => secMalzeme(key);
+        buttonCell.appendChild(button);
+
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Seçimi Kaldır';
+        editButton.onclick = () => editMalzeme(key);
+        buttonCell.appendChild(editButton);
+
+        row.appendChild(buttonCell);
+        malzemeListesi.appendChild(row);
+      });
+    };
+
+    // Etkinlik panosunu güncelleyen fonksiyon
+    const updatePano = (data) => {
+      etkinlikPanosu.innerHTML = `
+        <span><b>Tarih:</b> ${data?.tarih || ''}</span>
+        <span><b>Saat:</b> ${data?.saat || ''}</span>
+        <span><b>Yer:</b> ${data?.yer || ''}</span>
+      `;
+    };
+
+    // Firebase verilerini canlı dinleme
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      updateTable(data);
+    });
+
+    onValue(panoRef, (snapshot) => {
+      const data = snapshot.val();
+      updatePano(data);
+    });
+
+    // Malzeme seçim fonksiyonu
+    window.secMalzeme = async (key) => {
+      const isim = prompt('Lütfen isminizi girin:');
+      if (isim) {
+        const formattedIsim = isim.trim().charAt(0).toUpperCase() + isim.trim().slice(1);
+
+        const snapshot = await get(dbRef);
+        const data = snapshot.val() || {};
+        const kisiler = data[key] || [];
+
+        // İsim, başka bir malzeme için zaten seçilmişse uyarı ver
+        if (Object.values(data).flat().includes(formattedIsim)) {
+          alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
+          return;
+        }
+
+        const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key, max: 1 };
+        if (kisiler.length >= malzemeObj.max) {
+          alert(`${malzemeObj.label} için maksimum kişi sayısına ulaşıldı!`);
+          return;
+        }
+
+        kisiler.push(formattedIsim);
+        const itemRef = ref(database, `kahvaltiListesi/${key}`);
+        set(itemRef, kisiler)
+          .then(() => {
+            alert(`${malzemeObj.label} için seçim kaydedildi.`);
+          })
+          .catch((error) => {
+            alert('Bir hata oluştu: ' + error.message);
+          });
+      } else {
+        alert('Geçerli bir isim girin!');
+      }
+    };
+
+    // Tüm seçimleri ve eklenen malzemeleri sıfırlama fonksiyonu
+    window.sifirla = () => {
+      if (confirm('Tüm seçimleri ve eklenen malzemeleri sıfırlamak istediğinize emin misiniz?')) {
+        remove(dbRef).then(() => {
+          alert('Tüm seçimler ve eklenen malzemeler sıfırlandı!');
+        }).catch((error) => {
+          alert('Sıfırlama sırasında bir hata oluştu: ' + error.message);
+        });
+
+        remove(panoRef).then(() => {
+          alert('Etkinlik bilgileri sıfırlandı!');
+        }).catch((error) => {
+          alert('Etkinlik bilgileri sıfırlanırken bir hata oluştu: ' + error.message);
+        });
+      }
+    };
+
+    // Yeni malzeme ekleme fonksiyonu
+    window.addMalzeme = () => {
+      const yeniMalzeme = prompt('Yeni malzemenin adını girin:');
+      const kisi = prompt('Bu malzemeyi kim getirecek? İsim girin:');
+      if (yeniMalzeme && kisi) {
+        const formattedMalzeme = yeniMalzeme.trim();
+        const formattedKisi = kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1);
+        // Kullanıcı tarafından eklenen malzemeler için key, doğrudan malzeme adı olarak kullanılıyor
+        const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
+        set(itemRef, [formattedKisi])
+          .then(() => {
+            alert(`${formattedMalzeme} listeye ${formattedKisi} tarafından eklendi.`);
+          })
+          .catch((error) => {
+            alert('Malzeme eklenirken bir hata oluştu: ' + error.message);
+          });
+      } else {
+        alert('Geçerli bir malzeme adı ve isim girin!');
+      }
+    };
+
+    // Etkinlik panosu düzenleme fonksiyonu
+    window.editPano = () => {
+      const tarih = prompt('Etkinlik tarihi (GG/AA/YYYY):');
+      const saat = prompt('Etkinlik saati (SS:DD):');
+      const yer = prompt('Etkinlik yeri:');
+
+      update(panoRef, { tarih, saat, yer })
+        .then(() => {
+          alert('Etkinlik bilgileri güncellendi!');
+        })
+        .catch((error) => {
+          alert('Etkinlik bilgileri güncellenirken bir hata oluştu: ' + error.message);
+        });
+    };
+
+    // Malzeme seçimini iptal etme fonksiyonu
+    window.editMalzeme = (key) => {
+      const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key };
+      if (confirm(`${malzemeObj.label} seçimini silmek istediğinizden emin misiniz?`)) {
+        set(ref(database, `kahvaltiListesi/${key}`), [])
+          .then(() => {
+            alert(`${malzemeObj.label} seçimi silindi.`);
+          })
+          .catch((error) => {
+            alert('Seçim silinirken bir hata oluştu: ' + error.message);
+          });
+      }
+    };
+  </script>
 </body>
 </html>
