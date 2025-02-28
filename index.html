@@ -115,6 +115,23 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
+    // Yönetici parolası (Örnek: 12345)
+    const ADMIN_PASSWORD = "12345";
+
+    // Basit parola doğrulama fonksiyonu
+    function checkPassword() {
+      const input = prompt("Bu işlemi yapmak için yönetici parolasını girin:");
+      if (!input) {
+        return false;
+      }
+      if (input === ADMIN_PASSWORD) {
+        return true;
+      } else {
+        alert("Yanlış parola!");
+        return false;
+      }
+    }
+
     // Default malzemeler: veritabanı anahtarı (key), gösterim adı (label) ve seçim limiti (max)
     const defaultMalzemeler = [
       { key: "beyaz_peynir", label: "Beyaz Peynir", max: 1 },
@@ -178,7 +195,13 @@
 
         const editButton = document.createElement('button');
         editButton.textContent = 'Seçimi Kaldır';
-        editButton.onclick = () => editMalzeme(key);
+        // Parola kontrolü ve onaylama sırası: önce parola, sonra confirm
+        editButton.onclick = () => {
+          if (!checkPassword()) return;
+          if (confirm(`${malzemeObj.label} seçimini silmek istediğinizden emin misiniz?`)) {
+            editMalzeme(key);
+          }
+        };
         buttonCell.appendChild(editButton);
 
         row.appendChild(buttonCell);
@@ -252,7 +275,7 @@
       }
     };
 
-    // Rastgele seçim butonunun fonksiyonu (artık "rastgeleSecim" adıyla)
+    // Rastgele seçim butonunun fonksiyonu
     window.rastgeleSecim = async () => {
       const isim = prompt('Lütfen isminizi girin:');
       if (!isim) {
@@ -314,8 +337,10 @@
       }
     };
 
-    // Tüm seçimleri ve eklenen malzemeleri sıfırlama fonksiyonu
+    // Tüm seçimleri ve eklenen malzemeleri sıfırlama fonksiyonu (parola kontrolü)
     window.sifirla = () => {
+      // Önce parola doğrulama, sonra confirm
+      if (!checkPassword()) return;
       if (confirm('Tüm seçimleri ve eklenen malzemeleri sıfırlamak istediğinize emin misiniz?')) {
         remove(dbRef).then(() => {
           alert('Tüm seçimler ve eklenen malzemeler sıfırlandı!');
@@ -354,8 +379,11 @@
       }
     };
 
-    // Etkinlik panosu düzenleme fonksiyonu
+    // Etkinlik panosu düzenleme fonksiyonu (parola kontrolü)
     window.editPano = () => {
+      // Önce parola doğrulama
+      if (!checkPassword()) return;
+
       const tarih = prompt('Etkinlik tarihi (GG/AA/YYYY):');
       const saat = prompt('Etkinlik saati (SS:DD):');
       const yer = prompt('Etkinlik yeri:');
@@ -370,17 +398,16 @@
     };
 
     // Malzeme seçimini iptal etme fonksiyonu
+    // Artık editButton.onclick içinde parola ve confirm kontrolü yapılıyor.
+    // Burada sadece veriyi temizleme işlemini yapıyoruz.
     window.editMalzeme = (key) => {
-      const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key };
-      if (confirm(`${malzemeObj.label} seçimini silmek istediğinizden emin misiniz?`)) {
-        set(ref(database, `kahvaltiListesi/${key}`), [])
-          .then(() => {
-            alert(`${malzemeObj.label} seçimi silindi.`);
-          })
-          .catch((error) => {
-            alert('Seçim silinirken bir hata oluştu: ' + error.message);
-          });
-      }
+      set(ref(database, `kahvaltiListesi/${key}`), [])
+        .then(() => {
+          alert(`Seçim silindi.`);
+        })
+        .catch((error) => {
+          alert('Seçim silinirken bir hata oluştu: ' + error.message);
+        });
     };
   </script>
 </body>
