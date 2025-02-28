@@ -25,7 +25,7 @@
       .taken {
           background-color: #d4edda;
       }
-      .add-button, .reset-button, .edit-button {
+      .add-button, .reset-button, .edit-button, .random-button {
           padding: 10px 20px;
           background-color: #007bff;
           color: white;
@@ -39,7 +39,7 @@
       .reset-button:hover {
           background-color: #ff3333;
       }
-      .add-button:hover, .edit-button:hover {
+      .add-button:hover, .edit-button:hover, .random-button:hover {
           background-color: #0056b3;
       }
       .button-container {
@@ -56,6 +56,9 @@
       }
       .edit-button:before {
           content: "✎ ";
+      }
+      .random-button {
+          /* Zar simgesi HTML içinde direkt metin olarak eklendi */
       }
       #etkinlikPanosu {
           position: absolute;
@@ -84,6 +87,7 @@
 
   <div class="button-container">
       <div class="left-buttons">
+          <button class="random-button" onclick="rasgeleSecim()">🎲 Rasgele Seçim Yap</button>
           <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
           <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
       </div>
@@ -202,7 +206,7 @@
       updatePano(data);
     });
 
-    // Malzeme seçim fonksiyonu (güncellenmiş)
+    // Malzeme seçim fonksiyonu (tek kelime, yalnızca harf, ilk harf büyük)
     window.secMalzeme = async (key) => {
       const isim = prompt('Lütfen isminizi girin:');
       if (!isim) {
@@ -210,17 +214,13 @@
         return;
       }
 
-      // Baştaki ve sondaki boşlukları sil
       const trimmedIsim = isim.trim();
-
-      // Yalnızca harflerden (Türkçe dahil) oluşan tek kelime (boşluk, noktalama, rakam yok)
       const pattern = /^[a-zA-ZığüşöçİĞÜŞÖÇ]+$/;
       if (!pattern.test(trimmedIsim)) {
         alert("Geçerli bir isim girin! (Sadece tek kelime, boşluk ve noktalama yok)");
         return;
       }
 
-      // İlk harfi büyük, geri kalanı küçük yaparak normalize et
       const formattedIsim =
         trimmedIsim.charAt(0).toUpperCase() +
         trimmedIsim.slice(1).toLowerCase();
@@ -230,25 +230,85 @@
         const data = snapshot.val() || {};
         const kisiler = data[key] || [];
 
-        // Başka bir malzemede bu isim kullanılmış mı kontrol et
+        // Aynı isim başka malzemede var mı?
         if (Object.values(data).flat().includes(formattedIsim)) {
           alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
           return;
         }
 
-        // Malzeme limit kontrolü
+        // Malzeme kapasitesi dolu mu?
         const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key, max: 1 };
         if (kisiler.length >= malzemeObj.max) {
           alert(`${malzemeObj.label} için maksimum kişi sayısına ulaşıldı!`);
           return;
         }
 
-        // İsim ekle ve veritabanına yaz
+        // Seçimi veritabanına kaydet
         kisiler.push(formattedIsim);
-        const itemRef = ref(database, `kahvaltiListesi/${key}`);
-        await set(itemRef, kisiler);
-
+        await set(ref(database, `kahvaltiListesi/${key}`), kisiler);
         alert(`${malzemeObj.label} için seçim kaydedildi.`);
+      } catch (error) {
+        alert('Bir hata oluştu: ' + error.message);
+      }
+    };
+
+    // Rastgele seçim butonunun fonksiyonu
+    window.rasgeleSecim = async () => {
+      const isim = prompt('Lütfen isminizi girin:');
+      if (!isim) {
+        alert('Geçerli bir isim girin!');
+        return;
+      }
+
+      const trimmedIsim = isim.trim();
+      const pattern = /^[a-zA-ZığüşöçİĞÜŞÖÇ]+$/;
+      if (!pattern.test(trimmedIsim)) {
+        alert("Geçerli bir isim girin! (Sadece tek kelime, boşluk ve noktalama yok)");
+        return;
+      }
+
+      const formattedIsim =
+        trimmedIsim.charAt(0).toUpperCase() +
+        trimmedIsim.slice(1).toLowerCase();
+
+      try {
+        // Verileri çek
+        const snapshot = await get(dbRef);
+        const data = snapshot.val() || {};
+
+        // Bu isim zaten başka bir malzeme seçmiş mi?
+        if (Object.values(data).flat().includes(formattedIsim)) {
+          alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
+          return;
+        }
+
+        // Tüm malzemeleri (default + veritabanı) birleştir
+        const defaultData = defaultMalzemeler.reduce((acc, item) => {
+          acc[item.key] = [];
+          return acc;
+        }, {});
+        const allMalzemeler = { ...defaultData, ...data };
+
+        // Kapasitesi dolmamış malzemeleri filtrele
+        const availableItems = Object.entries(allMalzemeler).filter(([key, kisiler]) => {
+          const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key, max: 1 };
+          return kisiler.length < malzemeObj.max;
+        });
+
+        if (availableItems.length === 0) {
+          alert('Seçilebilecek uygun malzeme kalmadı!');
+          return;
+        }
+
+        // Rastgele bir malzeme seç
+        const randomIndex = Math.floor(Math.random() * availableItems.length);
+        const [randomKey, kisiler] = availableItems[randomIndex];
+        const malzemeObj = defaultMalzemeler.find(item => item.key === randomKey) || { label: randomKey, max: 1 };
+
+        kisiler.push(formattedIsim);
+        await set(ref(database, `kahvaltiListesi/${randomKey}`), kisiler);
+
+        alert(`Rasgele seçim yapıldı! "${malzemeObj.label}" için "${formattedIsim}" kaydedildi.`);
       } catch (error) {
         alert('Bir hata oluştu: ' + error.message);
       }
