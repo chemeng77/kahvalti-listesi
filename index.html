@@ -87,7 +87,7 @@
 
   <div class="button-container">
       <div class="left-buttons">
-          <button class="random-button" onclick="rasgeleSecim()">🎲 Rasgele Seçim Yap</button>
+          <button class="random-button" onclick="rastgeleSecim()">🎲 Rastgele Seçim Yap</button>
           <button class="add-button" onclick="addMalzeme()">Yeni Malzeme Ekle</button>
           <button class="edit-button" onclick="editPano()">Etkinlik Bilgilerini Düzenle</button>
       </div>
@@ -130,7 +130,7 @@
       { key: "kuru_yemis", label: "Kuru Yemiş", max: 1 },
       { key: "biber", label: "Biber", max: 1 },
       { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 },
-      { key: "bal", label: "Bal", max: 1 } 
+      { key: "bal", label: "Bal", max: 1 }
     ];
 
     const malzemeListesi = document.getElementById('malzemeListesi');
@@ -252,8 +252,8 @@
       }
     };
 
-    // Rastgele seçim butonunun fonksiyonu
-    window.rasgeleSecim = async () => {
+    // Rastgele seçim butonunun fonksiyonu (artık "rastgeleSecim" adıyla)
+    window.rastgeleSecim = async () => {
       const isim = prompt('Lütfen isminizi girin:');
       if (!isim) {
         alert('Geçerli bir isim girin!');
@@ -308,7 +308,7 @@
         kisiler.push(formattedIsim);
         await set(ref(database, `kahvaltiListesi/${randomKey}`), kisiler);
 
-        alert(`Rasgele seçim yapıldı! "${malzemeObj.label}" için "${formattedIsim}" kaydedildi.`);
+        alert(`Rastgele seçim yapıldı! "${malzemeObj.label}" için "${formattedIsim}" kaydedildi.`);
       } catch (error) {
         alert('Bir hata oluştu: ' + error.message);
       }
