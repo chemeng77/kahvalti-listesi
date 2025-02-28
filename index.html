@@ -92,9 +92,7 @@
 
   <div id="etkinlikPanosu"></div>
 
-  <!-- Kullanmak istersen, bu yorumu <script> dışında tut -->
   <script type="module">
-    // Firebase SDK v9 import
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, remove, get, update } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 
@@ -128,7 +126,7 @@
       { key: "kuru_yemis", label: "Kuru Yemiş", max: 1 },
       { key: "biber", label: "Biber", max: 1 },
       { key: "yesil_zeytin", label: "Yeşil Zeytin", max: 1 },
-      { key: "bal", label: "Bal", max: 1 } // Bal malzemesi
+      { key: "bal", label: "Bal", max: 1 } 
     ];
 
     const malzemeListesi = document.getElementById('malzemeListesi');
@@ -204,39 +202,55 @@
       updatePano(data);
     });
 
-    // Malzeme seçim fonksiyonu
+    // Malzeme seçim fonksiyonu (güncellenmiş)
     window.secMalzeme = async (key) => {
       const isim = prompt('Lütfen isminizi girin:');
-      if (isim) {
-        const formattedIsim = isim.trim().charAt(0).toUpperCase() + isim.trim().slice(1);
+      if (!isim) {
+        alert('Geçerli bir isim girin!');
+        return;
+      }
 
+      // Baştaki ve sondaki boşlukları sil
+      const trimmedIsim = isim.trim();
+
+      // Yalnızca harflerden (Türkçe dahil) oluşan tek kelime (boşluk, noktalama, rakam yok)
+      const pattern = /^[a-zA-ZığüşöçİĞÜŞÖÇ]+$/;
+      if (!pattern.test(trimmedIsim)) {
+        alert("Geçerli bir isim girin! (Sadece tek kelime, boşluk ve noktalama yok)");
+        return;
+      }
+
+      // İlk harfi büyük, geri kalanı küçük yaparak normalize et
+      const formattedIsim =
+        trimmedIsim.charAt(0).toUpperCase() +
+        trimmedIsim.slice(1).toLowerCase();
+
+      try {
         const snapshot = await get(dbRef);
         const data = snapshot.val() || {};
         const kisiler = data[key] || [];
 
-        // İsim, başka bir malzeme için zaten seçilmişse uyarı ver
+        // Başka bir malzemede bu isim kullanılmış mı kontrol et
         if (Object.values(data).flat().includes(formattedIsim)) {
           alert(`Bu isim (${formattedIsim}) zaten başka bir malzeme için seçim yaptı!`);
           return;
         }
 
+        // Malzeme limit kontrolü
         const malzemeObj = defaultMalzemeler.find(item => item.key === key) || { label: key, max: 1 };
         if (kisiler.length >= malzemeObj.max) {
           alert(`${malzemeObj.label} için maksimum kişi sayısına ulaşıldı!`);
           return;
         }
 
+        // İsim ekle ve veritabanına yaz
         kisiler.push(formattedIsim);
         const itemRef = ref(database, `kahvaltiListesi/${key}`);
-        set(itemRef, kisiler)
-          .then(() => {
-            alert(`${malzemeObj.label} için seçim kaydedildi.`);
-          })
-          .catch((error) => {
-            alert('Bir hata oluştu: ' + error.message);
-          });
-      } else {
-        alert('Geçerli bir isim girin!');
+        await set(itemRef, kisiler);
+
+        alert(`${malzemeObj.label} için seçim kaydedildi.`);
+      } catch (error) {
+        alert('Bir hata oluştu: ' + error.message);
       }
     };
 
@@ -263,7 +277,9 @@
       const kisi = prompt('Bu malzemeyi kim getirecek? İsim girin:');
       if (yeniMalzeme && kisi) {
         const formattedMalzeme = yeniMalzeme.trim();
-        const formattedKisi = kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1);
+        const formattedKisi =
+          kisi.trim().charAt(0).toUpperCase() + kisi.trim().slice(1).toLowerCase();
+
         // Kullanıcı tarafından eklenen malzemeler için key, doğrudan malzeme adı olarak kullanılıyor
         const itemRef = ref(database, `kahvaltiListesi/${formattedMalzeme}`);
         set(itemRef, [formattedKisi])
